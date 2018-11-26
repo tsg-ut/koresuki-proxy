@@ -16,5 +16,10 @@
   "bugs": {
     "url": "https://github.com/hakatashi/koresuki-proxy/issues"
   },
-  "homepage": "https://github.com/hakatashi/koresuki-proxy#readme"
+  "homepage": "https://github.com/hakatashi/koresuki-proxy#readme",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "dotenv": "^6.1.0",
+    "fastify": "^1.13.0"
+  }
 }
