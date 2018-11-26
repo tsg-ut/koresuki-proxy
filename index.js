@@ -4,6 +4,10 @@ const axios = require('axios');
 require('dotenv').load();
 
 fastify.post('/', async (request, reply) => {
+  if (request.body.key !== process.env.KEY) {
+    return {ok: false};
+  }
+
   if (request.body.url !== undefined) {
     axios.post(process.env.SLACK_WEBHOOK, {
       channel: process.env.KORESUKI_CHANNEL,
