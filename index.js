@@ -17,4 +17,7 @@ fastify.post('/', async (request, reply) => {
   return {ok: false};
 });
 
-fastify.listen(process.env.PORT || 3000);
+console.log('process.env', process.env);
+fastify.listen(process.env.PORT || 3000).then(() => {
+  console.log('fastify.server.address()', fastify.server.address());
+});
