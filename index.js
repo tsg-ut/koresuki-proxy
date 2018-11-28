@@ -1,23 +1,31 @@
+require('dotenv').load();
+
+const crypto = require('crypto');
 const fastify = require('fastify')();
 const axios = require('axios');
 
-require('dotenv').load();
+const keys = require('./keys.js');
 
 fastify.post('/', async (request, reply) => {
-  if (request.body.key !== process.env.KEY) {
+  const user = Object.entries(keys).find(([, hash]) => (
+    crypto.createHash('sha256').update(request.body.key, 'utf8').digest('hex') === hash
+  ));
+
+  if (user === undefined) {
     return {ok: false};
   }
 
-  if (request.body.url !== undefined) {
-    axios.post(process.env.SLACK_WEBHOOK, {
+  if (typeof request.body.url === 'string') {
+    await axios.post(process.env.SLACK_WEBHOOK, {
       channel: process.env.KORESUKI_CHANNEL,
       text: `これすき ${request.body.url}`,
-      username: 'koresuki-bot',
-      icon_emoji: process.env.KORESUKI_EMOJI,
+      username: `${user[0]} (koresuki-bot)`,
+      icon_emoji: `:${user[0]}:`,
       unfurl_links: true,
     });
     return {ok: true};
   }
+
   return {ok: false};
 });
 
