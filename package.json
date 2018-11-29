@@ -20,6 +20,7 @@
   "dependencies": {
     "axios": "^0.18.0",
     "dotenv": "^6.1.0",
-    "fastify": "^1.13.0"
+    "fastify": "^1.13.0",
+    "redis": "^2.8.0"
   }
 }
