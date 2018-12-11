@@ -22,11 +22,29 @@ fastify.post('/', async (request, reply) => {
   if (typeof request.body.url === 'string') {
     const ts = await promisify(redis.get).bind(redis)(request.body.url);
 
-    const {data} = await axios.post('https://slack.com/api/chat.postMessage', {
+    const {data: {members}} = await axios.post('https://slack.com/api/users.list', {
+      limit: 1000,
+    }, {
+      headers: {
+        Authorization: `Bearer ${process.env.SLACK_TOKEN}`,
+      },
+    });
+
+    const member = members.find(({profile, real_name, name}) => (
+      (profile && profile.display_name === user[0]) ||
+      name === user[0] ||
+      name === user[0]
+    ));
+
+    if (!member) {
+      return {ok: false};
+    }
+
+    const {data: {message}} = await axios.post('https://slack.com/api/chat.postMessage', {
       channel: process.env.KORESUKI_CHANNEL,
       text: `これすき ${ts === null ? request.body.url : ''}`,
       username: `${user[0]} (koresuki-bot)`,
-      icon_emoji: `:${user[0]}:`,
+      icon_url: member.profile.image_72,
       unfurl_links: true,
       as_user: false,
       ...(ts === null ? {} : {thread_ts: ts, reply_broadcast: true}),
@@ -37,7 +55,7 @@ fastify.post('/', async (request, reply) => {
     });
 
     if (ts === null) {
-      await promisify(redis.set).bind(redis)(request.body.url, data.message.ts);
+      await promisify(redis.set).bind(redis)(request.body.url, message.ts);
     }
 
     return {ok: true};
