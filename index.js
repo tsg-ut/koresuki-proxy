@@ -11,7 +11,6 @@ const keys = require('./keys.js');
 const redis = Redis.createClient(process.env.REDIS_URL || 'redis://localhost:6379');
 
 fastify.post('/', async (request, reply) => {
-  console.log(Object.entries(keys));
   const user = Object.entries(keys).find(([, hash]) => (
     crypto.createHash('sha256').update(request.body.key, 'utf8').digest('hex') === hash
   ));
@@ -23,16 +22,15 @@ fastify.post('/', async (request, reply) => {
   if (typeof request.body.url === 'string') {
     const ts = await promisify(redis.get).bind(redis)(request.body.url);
 
-    const {data} = await axios.post('https://slack.com/api/users.list', {
+    const {data: {members}} = await axios.post('https://slack.com/api/users.list', {
       limit: 1000,
     }, {
       headers: {
         Authorization: `Bearer ${process.env.SLACK_TOKEN}`,
       },
     });
-    console.log(data);
 
-    const member = data.members.find(({profile, real_name, name}) => (
+    const member = members.find(({profile, real_name, name}) => (
       (profile && profile.display_name === user[0]) ||
       name === user[0] ||
       name === user[0]
