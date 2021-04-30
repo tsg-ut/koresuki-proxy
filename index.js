@@ -3,12 +3,9 @@ require('dotenv').load();
 const crypto = require('crypto');
 const fastify = require('fastify')();
 const axios = require('axios');
-const Redis = require('redis');
 const {promisify} = require('util');
 
 const keys = require('./keys.js');
-
-const redis = Redis.createClient(process.env.REDIS_URL || 'redis://localhost:6379');
 
 fastify.post('/', async (request, reply) => {
   const user = Object.entries(keys).find(([, hash]) => (
@@ -23,9 +20,6 @@ fastify.post('/', async (request, reply) => {
     const url = request.body.url.trim();
     if (!url) {
       return {ok: false};
-    }
-
-    const ts = await promisify(redis.get).bind(redis)(url);
 
     const {data: {members}} = await axios.post('https://slack.com/api/users.list', {
       limit: 1000,
@@ -45,23 +39,18 @@ fastify.post('/', async (request, reply) => {
       return {ok: false};
     }
 
-    const {data: {message}} = await axios.post('https://slack.com/api/chat.postMessage', {
+    await axios.post('https://slack.com/api/chat.postMessage', {
       channel: process.env.KORESUKI_CHANNEL,
-      text: `これすき ${ts === null ? url : ''}`,
+      text: `これすき ${url}`,
       username: `${user[0]} (koresuki-bot)`,
       icon_url: member.profile.image_72,
       unfurl_links: true,
       as_user: false,
-      ...(ts === null ? {} : {thread_ts: ts, reply_broadcast: true}),
     }, {
       headers: {
         Authorization: `Bearer ${process.env.SLACK_TOKEN}`,
       },
     });
-
-    if (ts === null) {
-      await promisify(redis.set).bind(redis)(url, message.ts);
-    }
 
     return {ok: true};
   }
