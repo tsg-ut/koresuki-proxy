@@ -20,6 +20,7 @@ fastify.post('/', async (request, reply) => {
     const url = request.body.url.trim();
     if (!url) {
       return {ok: false};
+    }
 
     const {data: {members}} = await axios.post('https://slack.com/api/users.list', {
       limit: 1000,
